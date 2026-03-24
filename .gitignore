@@ -3,3 +3,6 @@ __pycache__/
 .venv/
 dictionaries/*.npy
 *.pyc
+.env
+stocks/test_*.txt
+results*.json
