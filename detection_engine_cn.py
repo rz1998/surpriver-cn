@@ -30,7 +30,7 @@ try:
     plt.rcParams['axes.unicode_minus'] = False
 except:
     pass
-plt.style.use('seaborn-white')
+# plt.style.use('seaborn-white')  # disabled
 plt.rc('grid', linestyle="dotted", color='#a0a0a0')
 
 # 导入A股数据引擎

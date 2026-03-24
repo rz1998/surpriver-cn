@@ -1,9 +1,7 @@
-# A股数据加载引擎 - 基于AKShare
+# A股数据加载引擎 - 支持AKShare和Tushare
 import os
 import sys
-import ta
 import math
-import json
 import collections
 import numpy as np
 import pandas as pd
@@ -15,23 +13,184 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-# 尝试导入AKShare
+# 加载环境变量
+def load_env():
+    """从.env文件加载环境变量"""
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+    if os.path.exists(env_path):
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
+
+load_env()
+
+# 获取数据源配置
+DATA_SOURCE = os.environ.get('DATA_SOURCE', 'akshare').lower()
+TUSHARE_TOKEN = os.environ.get('TUSHARE_TOKEN', '')
+
+# 尝试导入数据源库
+AKSHARE_AVAILABLE = False
+TUSHARE_AVAILABLE = False
+
 try:
     import akshare as ak
     AKSHARE_AVAILABLE = True
 except ImportError:
-    AKSHARE_AVAILABLE = False
-    print("警告: AKShare 未安装，将尝试安装...")
-    os.system(f"{sys.executable} -m pip install akshare -q")
+    pass
+
+try:
+    import tushare as ts
+    TUSHARE_AVAILABLE = True
+except ImportError:
+    pass
+
+
+class DataSourceFactory:
+    """数据源工厂类"""
+    
+    @staticmethod
+    def get_data_source():
+        """获取数据源实例"""
+        if DATA_SOURCE == 'tushare':
+            if not TUSHARE_AVAILABLE:
+                raise ImportError("Tushare not installed. Run: uv pip install tushare")
+            if not TUSHARE_TOKEN:
+                raise ValueError("TUSHARE_TOKEN not configured in .env file")
+            return TushareDataSource()
+            import subprocess
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "tushare", "-q"])
+            import tushare as ts
+            TUSHARE_AVAILABLE = True
+            return TushareDataSource()
+        else:  # 默认akshare
+            if not AKSHARE_AVAILABLE:
+                raise ImportError("AKShare not installed. Run: uv pip install akshare")
+            return AKShareDataSource()
+
+
+class AKShareDataSource:
+    """AKShare数据源"""
+    
+    def get_data(self, symbol, period, days):
+        """获取A股数据 - AKShare"""
+        end_time = dt.datetime.now()
+        start_time = end_time - dt.timedelta(days=days)
+        
+        # 转换symbol（去掉后缀）
+        code = symbol.split(".")[0]
+        
+        # 转换period格式
+        period_map = {1: "1", 5: "5", 15: "15", 30: "30", 60: "60"}
+        period_str = period_map.get(period, "60")
+        
+        try:
+            df = ak.stock_zh_a_hist_min_em(
+                symbol=code,
+                period=period_str,
+                start_date=start_time.strftime("%Y%m%d %H:%M:%S"),
+                end_date=end_time.strftime("%Y%m%d %H:%M:%S"),
+                adjust="qfq"
+            )
+            
+            if df is None or len(df) == 0:
+                return None
+            
+            # 重命名列
+            df = df.rename(columns={
+                "时间": "Datetime",
+                "开盘": "Open",
+                "收盘": "Close",
+                "最高": "High",
+                "最低": "Low",
+                "成交量": "Volume",
+                "成交额": "Amount",
+                "均价": "AvgPrice"
+            })
+            
+            df["Datetime"] = pd.to_datetime(df["Datetime"])
+            df = df[['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']]
+            df = df.sort_values("Datetime")
+            
+            return df
+        except Exception as e:
+            print(f"AKShare获取{symbol}数据失败: {e}")
+            return None
+
+
+class TushareDataSource:
+    """Tushare数据源"""
+    
+    def __init__(self):
+        self.pro = ts.pro(TUSHARE_TOKEN)
+    
+    def get_data(self, symbol, period, days):
+        """获取A股数据 - Tushare"""
+        end_date = dt.datetime.now().strftime("%Y%m%d")
+        start_date = (dt.datetime.now() - dt.timedelta(days=days)).strftime("%Y%m%d")
+        
+        # 转换symbol
+        code = symbol.split(".")[0]
+        
+        # 判断市场
+        if code.startswith(("6", "5", "9")):
+            ts_code = f"{code}.SH"
+        else:
+            ts_code = f"{code}.SZ"
+        
+        # 转换period到Tushare格式
+        period_map = {
+            1: "1min",
+            5: "5min", 
+            15: "15min",
+            30: "30min",
+            60: "60min"
+        }
+        freq = period_map.get(period, "60min")
+        
+        try:
+            df = self.pro.ts_bar(
+                ts_code=ts_code,
+                freq=freq,
+                start_date=start_date,
+                end_date=end_date,
+                adjust="qfq"
+            )
+            
+            if df is None or len(df) == 0:
+                return None
+            
+            # 重命名列
+            df = df.rename(columns={
+                "trade_date": "Datetime",
+                "open": "Open",
+                "high": "High",
+                "low": "Low",
+                "close": "Close",
+                "vol": "Volume",
+                "amount": "Amount"
+            })
+            
+            df["Datetime"] = pd.to_datetime(df["Datetime"])
+            df = df[['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']]
+            df = df.sort_values("Datetime")
+            
+            return df
+        except Exception as e:
+            print(f"Tushare获取{symbol}数据失败: {e}")
+            return None
 
 
 class DataEngineCN:
-    """A股数据引擎，使用AKShare获取中国A股数据"""
+    """A股数据引擎"""
     
     def __init__(self, history_to_use, data_granularity_minutes, is_save_dict, is_load_dict, 
                  dict_path, min_volume_filter, is_test, future_bars_for_testing, 
                  volatility_filter, stocks_list, market="auto"):
-        print("A股数据引擎初始化中...")
+        print(f"A股数据引擎初始化中... (数据源: {DATA_SOURCE})")
+        
         self.DATA_GRANULARITY_MINUTES = data_granularity_minutes
         self.IS_SAVE_DICT = is_save_dict
         self.IS_LOAD_DICT = is_load_dict
@@ -40,7 +199,7 @@ class DataEngineCN:
         self.FUTURE_FOR_TESTING = future_bars_for_testing
         self.IS_TEST = is_test
         self.VOLATILITY_THRESHOLD = volatility_filter
-        self.MARKET = market  # auto, sh, sz, bj
+        self.MARKET = market
         
         # 股票列表
         self.directory_path = str(os.path.dirname(os.path.abspath(__file__)))
@@ -57,13 +216,24 @@ class DataEngineCN:
         self.features_dictionary_for_all_symbols = {}
         self.stock_data_length = []
         
-        # 确保AKShare可用
-        if not AKSHARE_AVAILABLE:
-            import subprocess
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "akshare", "-q"])
-            global ak
-            import akshare as ak
-            AKSHARE_AVAILABLE = True
+        # 初始化数据源
+        self.data_source = DataSourceFactory.get_data_source()
+        
+        # 确定获取数据的天数
+        self.days = self._get_days_for_period(data_granularity_minutes)
+    
+    def _get_days_for_period(self, minutes):
+        """根据周期确定获取数据的天数"""
+        if minutes == 1:
+            return 7
+        elif minutes <= 5:
+            return 30
+        elif minutes <= 15:
+            return 60
+        elif minutes <= 30:
+            return 120
+        else:
+            return 240
 
     def load_stocks_from_file(self):
         """从文件加载股票代码列表"""
@@ -79,20 +249,18 @@ class DataEngineCN:
             stock = stock.strip()
             if not stock:
                 continue
-            # 已经是完整代码（带后缀）
             if stock.endswith(".SH") or stock.endswith(".SZ") or stock.endswith(".BJ"):
                 processed_stocks.append(stock)
-            # 纯数字代码，自动判断市场
             elif stock.isdigit():
                 code = stock.zfill(6)
                 if code.startswith(("6", "5", "9")):
-                    processed_stocks.append(f"{code}.SH")  # 上海
+                    processed_stocks.append(f"{code}.SH")
                 elif code.startswith(("0", "3")):
-                    processed_stocks.append(f"{code}.SZ")  # 深圳
+                    processed_stocks.append(f"{code}.SZ")
                 elif code.startswith(("4", "8")):
-                    processed_stocks.append(f"{code}.BJ")  # 北京
+                    processed_stocks.append(f"{code}.BJ")
                 else:
-                    processed_stocks.append(f"{code}.SH")  # 默认上海
+                    processed_stocks.append(f"{code}.SH")
             else:
                 processed_stocks.append(stock)
         
@@ -103,65 +271,26 @@ class DataEngineCN:
     def get_most_frequent_key(self, input_list):
         counter = collections.Counter(input_list)
         counter_keys = list(counter.keys())
-        return counter_keys[0]
+        return counter_keys[0] if counter_keys else 0
 
     def get_data(self, symbol):
         """获取A股数据"""
-        # 确定时间周期
-        if self.DATA_GRANULARITY_MINUTES == 1:
-            period = "7"
-        elif self.DATA_GRANULARITY_MINUTES <= 5:
-            period = "30"
-        elif self.DATA_GRANULARITY_MINUTES <= 15:
-            period = "60"
-        elif self.DATA_GRANULARITY_MINUTES <= 30:
-            period = "120"
-        else:
-            period = "240"
-        
         try:
-            # 转换时间粒度为AKShare格式
-            if self.DATA_GRANULARITY_MINUTES == 1:
-                period_str = f"{period}d"
-            else:
-                period_str = f"{period}d"
-            
-            # 获取数据
-            stock_prices = ak.stock_zh_a_hist(
-                symbol=symbol.split(".")[0],  # 去掉后缀
-                period="1",  # 1分钟
-                start_date=(dt.datetime.now() - dt.timedelta(days=int(period))).strftime("%Y%m%d"),
-                end_date=dt.datetime.now().strftime("%Y%m%d"),
-                adjust="qfq"
+            df = self.data_source.get_data(
+                symbol=symbol,
+                period=self.DATA_GRANULARITY_MINUTES,
+                days=self.days
             )
             
-            if stock_prices is None or len(stock_prices) == 0:
+            if df is None or len(df) == 0:
                 return [], [], True
             
-            # 重命名列
-            stock_prices = stock_prices.rename(columns={
-                "时间": "Datetime",
-                "开盘": "Open",
-                "最高": "High",
-                "最低": "Low",
-                "收盘": "Close",
-                "成交量": "Volume",
-                "成交额": "Amount"
-            })
-            
-            # 转换时间格式
-            stock_prices["Datetime"] = pd.to_datetime(stock_prices["Datetime"])
-            
-            # 选择需要的列
-            stock_prices = stock_prices[['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']]
-            stock_prices = stock_prices.sort_values("Datetime")
-            
-            # 限制数据长度（AKShare免费版限制）
+            # 限制数据长度
             max_bars = 800
-            if len(stock_prices) > max_bars:
-                stock_prices = stock_prices.tail(max_bars)
+            if len(df) > max_bars:
+                df = df.tail(max_bars)
             
-            data_length = len(stock_prices)
+            data_length = len(df)
             self.stock_data_length.append(data_length)
             
             # 检查数据完整性
@@ -171,13 +300,13 @@ class DataEngineCN:
                     return [], [], True
             
             if self.IS_TEST == 1:
-                stock_prices_list = stock_prices.values.tolist()
+                stock_prices_list = df.values.tolist()
                 stock_prices_list = stock_prices_list[1:]
                 future_prices_list = stock_prices_list[-(self.FUTURE_FOR_TESTING + 1):]
                 historical_prices = pd.DataFrame(stock_prices_list[:-self.FUTURE_FOR_TESTING])
                 historical_prices.columns = ['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']
             else:
-                stock_prices_list = stock_prices.values.tolist()
+                stock_prices_list = df.values.tolist()
                 stock_prices_list = stock_prices_list[1:]
                 historical_prices = pd.DataFrame(stock_prices_list)
                 historical_prices.columns = ['Datetime', 'Open', 'High', 'Low', 'Close', 'Volume']
@@ -198,12 +327,11 @@ class DataEngineCN:
         close_prices = [float(item) for item in close_prices if item != 0]
         if len(close_prices) < 2:
             return 0
-        volatility = np.std(close_prices)
-        return volatility
+        return np.std(close_prices)
 
     def collect_data_for_all_tickers(self):
         """为所有股票收集数据"""
-        print("正在为所有股票加载数据...")
+        print(f"正在为所有股票加载数据 (数据源: {DATA_SOURCE})...")
         
         features = []
         symbol_names = []
@@ -218,28 +346,24 @@ class DataEngineCN:
                 if not not_found:
                     volatility = self.calculate_volatility(stock_price_data)
                     
-                    # 过滤低波动股票
                     if volatility < self.VOLATILITY_THRESHOLD:
                         continue
                     
                     features_dictionary = self.taEngine.get_technical_indicators(stock_price_data)
                     feature_list = self.taEngine.get_features(features_dictionary)
                     
-                    # 保存到字典
                     self.features_dictionary_for_all_symbols[symbol] = {
                         "features": features_dictionary, 
                         "current_prices": stock_price_data, 
                         "future_prices": future_prices
                     }
                     
-                    # 每100支股票保存一次
                     if len(self.features_dictionary_for_all_symbols) % 100 == 0 and self.IS_SAVE_DICT == 1:
                         np.save(self.DICT_PATH, self.features_dictionary_for_all_symbols)
                     
                     if np.isnan(feature_list).any():
                         continue
                     
-                    # 检查成交量
                     average_volume = np.mean(list(stock_price_data["Volume"])[-30:])
                     if average_volume < self.VOLUME_FILTER:
                         continue
@@ -254,8 +378,9 @@ class DataEngineCN:
                 continue
         
         # 清理异常数据
-        features, historical_price_info, future_price_info, symbol_names = \
-            self.remove_bad_data(features, historical_price_info, future_price_info, symbol_names)
+        if features:
+            features, historical_price_info, future_price_info, symbol_names = \
+                self.remove_bad_data(features, historical_price_info, future_price_info, symbol_names)
         
         return features, historical_price_info, future_price_info, symbol_names
 
@@ -282,15 +407,23 @@ class DataEngineCN:
             historical_price_info.append(current_prices)
             future_price_info.append(future_prices)
         
-        features, historical_price_info, future_price_info, symbol_names = \
-            self.remove_bad_data(features, historical_price_info, future_price_info, symbol_names)
+        if features:
+            features, historical_price_info, future_price_info, symbol_names = \
+                self.remove_bad_data(features, historical_price_info, future_price_info, symbol_names)
         
         return features, historical_price_info, future_price_info, symbol_names
 
     def remove_bad_data(self, features, historical_price_info, future_price_info, symbol_names):
         """移除异常数据"""
+        if not features:
+            return [], [], [], []
+            
         length_dictionary = collections.Counter([len(feature) for feature in features])
         length_dictionary = list(length_dictionary.keys())
+        
+        if not length_dictionary:
+            return [], [], [], []
+            
         most_common_length = length_dictionary[0]
         
         filtered_features, filtered_historical_price = [], []

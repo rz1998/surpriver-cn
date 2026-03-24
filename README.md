@@ -10,7 +10,7 @@
 
 本项目是对 [tradynamics/surpriver](https://github.com/tradynamics/surpriver) 的AI自动化改造版本，原项目专注于美股异动检测。本版本针对中国A股市场进行了深度适配：
 
-- **数据源**：Yahoo Finance → AKShare（免费A股数据）
+- **数据源**：Yahoo Finance → AKShare / Tushare（可选）
 - **市场支持**：美股 → 沪深北交所全支持
 - **代码体系**：美股代码（AAPL）→ A股代码（600000.SH）
 - **输出语言**：英文 → 中英双语
@@ -27,15 +27,55 @@
 
 | 类别 | 技术 |
 |------|------|
-| 数据获取 | AKShare |
+| 数据获取 | AKShare / Tushare（可选）|
 | 技术分析 | ta-lib |
 | 数据处理 | Pandas, NumPy, SciPy |
 | 机器学习 | Scikit-learn (Isolation Forest) |
 | 可视化 | Matplotlib |
 
-## 快速开始
+## 数据源配置
 
-### 1. 安装依赖
+项目支持两个数据源，通过 `.env` 文件切换：
+
+### 方式一：AKShare（默认，免费）
+
+```bash
+# .env 文件
+DATA_SOURCE=akshare
+```
+
+无需配置，直接使用。但需要能访问东方财富接口。
+
+### 方式二：Tushare（推荐，更稳定）
+
+```bash
+# .env 文件
+DATA_SOURCE=tushare
+TUSHARE_TOKEN=your_tushare_token_here
+```
+
+**申请Tushare Token：**
+1. 打开 https://tushare.pro/register 注册账号
+2. 申请 Token：https://tushare.pro/document/88
+3. 将 Token 填入 `.env` 文件
+
+### 配置示例
+
+```bash
+# 复制模板
+cp .env.template .env
+
+# 编辑配置
+nano .env
+```
+
+```ini
+# .env
+DATA_SOURCE=tushare
+TUSHARE_TOKEN=your_token_here
+```
+
+## 安装
 
 ```bash
 # 克隆项目
@@ -47,11 +87,19 @@ uv venv .venv
 source .venv/bin/activate  # Linux/Mac
 # .venv\Scripts\activate   # Windows
 
-# 安装依赖
-uv pip install -r requirements.txt
+# 安装依赖（根据数据源选择）
+uv pip install akshare ta numpy pandas scipy scikit-learn matplotlib tqdm
+# 或
+uv pip install tushare ta numpy pandas scipy scikit-learn matplotlib tqdm
+```
 
-# 或直接用 pip（如果有）
-pip install -r requirements.txt
+## 快速开始
+
+### 1. 配置数据源
+
+```bash
+cp .env.template .env
+# 编辑 .env 选择数据源并填入 Token（如果是 Tushare）
 ```
 
 ### 2. 准备股票列表
@@ -130,22 +178,24 @@ python detection_engine_cn.py \
 
 ```
 surpriver-cn/
-├── data_loader_cn.py      # A股数据加载（AKShare）
+├── data_loader_cn.py      # A股数据加载（支持AKShare/Tushare）
 ├── detection_engine_cn.py  # 主检测引擎
-├── feature_generator.py    # 技术指标生成（保留原版）
+├── feature_generator.py    # 技术指标生成
 ├── requirements.txt        # 依赖
+├── .env.template         # 环境变量模板
 ├── stocks/
-│   └── stocks_cn.txt      # A股股票列表示例
-├── dictionaries/           # 数据缓存
-└── figures/               # 图表输出
+│   └── stocks_cn.txt     # A股股票列表示例
+├── dictionaries/          # 数据缓存
+└── figures/              # 图表输出
 ```
 
 ## 注意事项
 
-1. **数据限制**：AKShare免费版有数据量限制，高频交易建议付费数据源
-2. **市场兼容性**：仅支持A股，不支持港股、美股
-3. **时间延迟**：实时数据可能有15分钟延迟
-4. **异动≠涨跌**：异动检测只识别异常波动，不预测方向
+1. **数据源选择**：Tushare更稳定但需要Token；AKShare免费但依赖网络环境
+2. **数据限制**：AKShare免费版有数据量限制，高频交易建议付费数据源
+3. **市场兼容性**：仅支持A股，不支持港股、美股
+4. **时间延迟**：实时数据可能有15分钟延迟
+5. **异动≠涨跌**：异动检测只识别异常波动，不预测方向
 
 ## 原项目
 

@@ -1,8 +1,9 @@
 # Surpriver-CN A股异动检测依赖
 # Python >= 3.8
 
-# 数据获取
+# 数据获取（二选一）
 akshare>=1.10.0
+# tushare>=1.4.0  # 注释: 如果使用tushare，取消此行注释
 
 # 技术分析
 ta>=0.10.0
@@ -20,6 +21,3 @@ matplotlib>=3.4.0
 
 # 进度条
 tqdm>=4.60.0
-
-# 克隆自原版surpriver的依赖(部分保留)
-# yfinance  # 原版美股数据，CN版主要用akshare

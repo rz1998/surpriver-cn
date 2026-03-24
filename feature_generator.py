@@ -12,7 +12,7 @@ import collections
 import numpy as np
 from os import walk
 import pandas as pd
-import yfinance as yf
+# import yfinance as yf  # not used in CN version
 import datetime as dt
 from scipy.stats import linregress
 from datetime import datetime, timedelta
