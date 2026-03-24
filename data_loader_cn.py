@@ -60,11 +60,6 @@ class DataSourceFactory:
             if not TUSHARE_TOKEN:
                 raise ValueError("TUSHARE_TOKEN not configured in .env file")
             return TushareDataSource()
-            import subprocess
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "tushare", "-q"])
-            import tushare as ts
-            TUSHARE_AVAILABLE = True
-            return TushareDataSource()
         else:  # 默认akshare
             if not AKSHARE_AVAILABLE:
                 raise ImportError("AKShare not installed. Run: uv pip install akshare")
@@ -124,10 +119,11 @@ class TushareDataSource:
     """Tushare数据源"""
     
     def __init__(self):
-        self.pro = ts.pro(TUSHARE_TOKEN)
+        ts.set_token(TUSHARE_TOKEN)
+        self.pro = ts.pro_api()
     
     def get_data(self, symbol, period, days):
-        """获取A股数据 - Tushare"""
+        """获取A股数据 - Tushare 日线"""
         end_date = dt.datetime.now().strftime("%Y%m%d")
         start_date = (dt.datetime.now() - dt.timedelta(days=days)).strftime("%Y%m%d")
         
@@ -140,23 +136,15 @@ class TushareDataSource:
         else:
             ts_code = f"{code}.SZ"
         
-        # 转换period到Tushare格式
-        period_map = {
-            1: "1min",
-            5: "5min", 
-            15: "15min",
-            30: "30min",
-            60: "60min"
-        }
-        freq = period_map.get(period, "60min")
+        # 转换period到Tushare格式（日线不需要转换，固定用日线）
+        # 注：Tushare分钟数据限制严格，使用日线更适合大规模扫描
         
         try:
-            df = self.pro.ts_bar(
+            # 使用日线数据接口（限制更宽松，每分钟120次）
+            df = self.pro.daily(
                 ts_code=ts_code,
-                freq=freq,
                 start_date=start_date,
-                end_date=end_date,
-                adjust="qfq"
+                end_date=end_date
             )
             
             if df is None or len(df) == 0:
@@ -169,8 +157,7 @@ class TushareDataSource:
                 "high": "High",
                 "low": "Low",
                 "close": "Close",
-                "vol": "Volume",
-                "amount": "Amount"
+                "vol": "Volume"
             })
             
             df["Datetime"] = pd.to_datetime(df["Datetime"])
@@ -189,7 +176,8 @@ def fetch_stock_list_from_api():
     
     if DATA_SOURCE == 'tushare' and TUSHARE_AVAILABLE and TUSHARE_TOKEN:
         try:
-            pro = ts.pro(TUSHARE_TOKEN)
+            ts.set_token(TUSHARE_TOKEN)
+            pro = ts.pro_api()
             # 获取所有A股
             df = pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name')
             for _, row in df.iterrows():
@@ -239,6 +227,7 @@ class DataEngineCN:
         self.IS_TEST = is_test
         self.VOLATILITY_THRESHOLD = volatility_filter
         self.MARKET = market
+        self.auto_fetch_stocks = auto_fetch_stocks
         
         # 股票列表
         self.directory_path = str(os.path.dirname(os.path.abspath(__file__)))
@@ -293,6 +282,8 @@ class DataEngineCN:
         with open(self.stocks_file_path, "r", encoding="utf-8") as f:
             stocks_list = f.readlines()
         stocks_list = [str(item).strip("\n").strip() for item in stocks_list]
+        # 去除行内注释（如 "000001  # 平安银行" -> "000001"）
+        stocks_list = [s.split('#')[0].strip() for s in stocks_list]
         stocks_list = [s for s in stocks_list if s and not s.startswith("#")]
         
         # 自动识别市场后缀
