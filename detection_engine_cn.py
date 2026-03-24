@@ -51,6 +51,7 @@ argParser.add_argument("--future_bars", type=int, default=25, help="测试用未
 argParser.add_argument("--volatility_filter", type=float, default=0.05, help="波动率过滤阈值")
 argParser.add_argument("--output_format", type=str, default="CLI", help="输出格式: CLI 或 JSON")
 argParser.add_argument("--stock_list", type=str, default="stocks_cn.txt", help="股票列表文件名")
+argParser.add_argument("--auto_fetch_stocks", action="store_true", help="自动从API获取A股股票列表（无需手动配置股票列表）")
 
 args = argParser.parse_args()
 
@@ -66,6 +67,7 @@ future_bars = args.future_bars
 volatility_filter = args.volatility_filter
 output_format = args.output_format.upper()
 stock_list = args.stock_list
+auto_fetch_stocks = args.auto_fetch_stocks
 
 
 class ArgChecker:
@@ -118,7 +120,8 @@ class SurpriverCN:
             self.HISTORY_TO_USE, self.DATA_GRANULARITY_MINUTES,
             self.IS_SAVE_DICTIONARY, self.IS_LOAD_FROM_DICTIONARY, self.DATA_DICTIONARY_PATH,
             self.MINIMUM_VOLUME, self.IS_TEST, self.FUTURE_BARS,
-            self.VOLATILITY_FILTER, self.STOCK_LIST
+            self.VOLATILITY_FILTER, self.STOCK_LIST,
+            auto_fetch_stocks=auto_fetch_stocks
         )
     
     @staticmethod

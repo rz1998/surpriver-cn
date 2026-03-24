@@ -102,18 +102,27 @@ cp .env.template .env
 # 编辑 .env 选择数据源并填入 Token（如果是 Tushare）
 ```
 
-### 2. 准备股票列表
+### 2. 运行检测（自动获取股票列表）
 
-编辑 `stocks/stocks_cn.txt`，支持格式：
-```
-600000  # 浦发银行
-600036  # 招商银行
-000001  # 平安银行
-300760  # 迈瑞医疗
-430047.BJ  # 北交所
-```
+可以直接运行，无需准备股票列表：
 
-### 3. 运行检测
+```bash
+# 自动获取全A股股票列表并检测异动
+python detection_engine_cn.py \
+    --top_n 25 \
+    --min_volume 10000 \
+    --data_granularity_minutes 60 \
+    --history_to_use 14 \
+    --auto_fetch_stocks
+
+# 或手动指定股票列表
+python detection_engine_cn.py \
+    --top_n 25 \
+    --min_volume 10000 \
+    --data_granularity_minutes 60 \
+    --history_to_use 14 \
+    --stock_list stocks_cn.txt
+```
 
 ```bash
 # 检测异动股票
@@ -164,6 +173,7 @@ python detection_engine_cn.py \
 | `--future_bars` | 25 | 测试用未来K线数 |
 | `--output_format` | CLI | 输出格式（CLI/JSON） |
 | `--stock_list` | `stocks_cn.txt` | 股票列表文件 |
+| `--auto_fetch_stocks` | False | 自动从API获取A股股票列表（无需手动配置） |
 
 ## 股票代码说明
 

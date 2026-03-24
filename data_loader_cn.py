@@ -183,12 +183,51 @@ class TushareDataSource:
             return None
 
 
+def fetch_stock_list_from_api():
+    """从API自动获取A股股票列表"""
+    stocks = []
+    
+    if DATA_SOURCE == 'tushare' and TUSHARE_AVAILABLE and TUSHARE_TOKEN:
+        try:
+            pro = ts.pro(TUSHARE_TOKEN)
+            # 获取所有A股
+            df = pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name')
+            for _, row in df.iterrows():
+                code = row['ts_code']
+                if code.startswith('6') or code.startswith('00') or code.startswith('30') or code.startswith('4') or code.startswith('8'):
+                    stocks.append(code)
+            print(f"通过Tushare获取了 {len(stocks)} 只股票")
+            return stocks
+        except Exception as e:
+            print(f"Tushare获取股票列表失败: {e}")
+    
+    if AKSHARE_AVAILABLE:
+        try:
+            # 获取沪深A股列表
+            df = ak.stock_info_a_code_name()
+            for _, row in df.iterrows():
+                code = str(row['code'])
+                if code.startswith(('6', '00', '30', '4', '8')):
+                    if code.startswith('6'):
+                        stocks.append(f"{code}.SH")
+                    elif code.startswith('4') or code.startswith('8'):
+                        stocks.append(f"{code}.BJ")
+                    else:
+                        stocks.append(f"{code}.SZ")
+            print(f"通过AKShare获取了 {len(stocks)} 只股票")
+            return stocks
+        except Exception as e:
+            print(f"AKShare获取股票列表失败: {e}")
+    
+    return []
+
+
 class DataEngineCN:
     """A股数据引擎"""
     
     def __init__(self, history_to_use, data_granularity_minutes, is_save_dict, is_load_dict, 
                  dict_path, min_volume_filter, is_test, future_bars_for_testing, 
-                 volatility_filter, stocks_list, market="auto"):
+                 volatility_filter, stocks_list, market="auto", auto_fetch_stocks=False):
         print(f"A股数据引擎初始化中... (数据源: {DATA_SOURCE})")
         
         self.DATA_GRANULARITY_MINUTES = data_granularity_minutes
@@ -236,7 +275,20 @@ class DataEngineCN:
             return 240
 
     def load_stocks_from_file(self):
-        """从文件加载股票代码列表"""
+        """从文件加载股票代码列表，或自动获取"""
+        # 如果配置了自动获取或文件不存在，则从API获取
+        if not os.path.exists(self.stocks_file_path) or self.auto_fetch_stocks:
+            if not os.path.exists(self.stocks_file_path):
+                print(f"股票列表文件不存在: {self.stocks_file_path}")
+            print("正在从API自动获取A股股票列表...")
+            stocks_list = fetch_stock_list_from_api()
+            if stocks_list:
+                self.stocks_list = list(sorted(set(stocks_list)))
+                print(f"股票总数: {len(self.stocks_list)}")
+                return
+            else:
+                print("自动获取失败，请手动创建股票列表文件")
+        
         print("正在加载股票列表...")
         with open(self.stocks_file_path, "r", encoding="utf-8") as f:
             stocks_list = f.readlines()
