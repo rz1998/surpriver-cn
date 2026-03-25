@@ -161,9 +161,9 @@ source .venv/bin/activate  # Linux/Mac
 # .venv\Scripts\activate   # Windows
 
 # 安装依赖（根据数据源选择）
-uv pip install akshare ta numpy pandas scipy scikit-learn matplotlib tqdm
-# 或
-uv pip install tushare ta numpy pandas scipy scikit-learn matplotlib tqdm
+uv pip install -r requirements.txt
+# 或使用 pip
+pip install -r requirements.txt
 ```
 
 ## 快速开始
