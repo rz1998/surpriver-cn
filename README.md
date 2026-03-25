@@ -2,13 +2,34 @@
 
 > 🇨🇳 A股异动检测 - 基于Isolation Forest机器学习算法
 
-**完全由AI改造自 [tradynamics/surpriver](https://github.com/tradynamics/surpriver)，专为A股市场设计。**
+**完全由AI改造自 [tradytics/surpriver](https://github.com/tradytics/surpriver)，专为A股市场设计。**
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
+---
+
+## 源项目介绍 (Original Project)
+
+> **Surpriver** - 利用机器学习和异常检测，在股票大幅波动之前发现它们。
+
+**原文（英文）：**
+
+> *Find high moving stocks before they move using anomaly detection and machine learning. Surpriver uses machine learning to look at volume + price action and infer unusual patterns which can result in big moves in stocks.*
+
+**翻译（中文）：**
+
+> Surpriver 使用机器学习技术分析成交量和价格走势，推断异常模式，从而在股票大幅波动之前识别出潜在的高波动股票。
+
+Surpriver 基于 **Isolation Forest（隔离森林）** 算法，通过分析以下特征来检测异常：
+- 📊 **成交量异常**：今日成交量与历史均量的对比
+- 📈 **价格波动异常**：短期与长期波动率的差异
+- 🔍 **技术指标异常**：RSI、Stochastic、CCI、EOM等指标的非典型模式
+
+---
+
 ## 项目说明
 
-本项目是对 [tradynamics/surpriver](https://github.com/tradynamics/surpriver) 的AI自动化改造版本，原项目专注于美股异动检测。本版本针对中国A股市场进行了深度适配：
+本项目是对 [tradytics/surpriver](https://github.com/tradytics/surpriver) 的AI自动化改造版本，原项目专注于美股异动检测。本版本针对中国A股市场进行了深度适配：
 
 - **数据源**：Yahoo Finance → AKShare / Tushare（可选）
 - **市场支持**：美股 → 沪深北交所全支持
@@ -143,7 +164,7 @@ python detection_engine_cn.py \
     --data_dictionary_path 'dictionaries/cn_data_dict.npy'
 ```
 
-### 4. 测试模式
+### 3. 测试模式
 
 ```bash
 # 测试历史表现
@@ -209,11 +230,11 @@ surpriver-cn/
 
 ## 原项目
 
-- [tradynamics/surpriver](https://github.com/tradynamics/surpriver) - 美股版本
+- [tradytics/surpriver](https://github.com/tradytics/surpriver) - 美股版本
 
 ## License
 
-基于 GPL v3，继承自 [tradynamics/surpriver](https://github.com/tradynamics/surpriver)
+基于 GPL v3，继承自 [tradytics/surpriver](https://github.com/tradytics/surpriver)
 
 ---
 
