@@ -96,6 +96,58 @@ DATA_SOURCE=tushare
 TUSHARE_TOKEN=your_token_here
 ```
 
+## 环境安装
+
+### Git
+
+#### Linux (Ubuntu/Debian)
+```bash
+sudo apt update
+sudo apt install git
+git --version
+```
+
+#### Linux (CentOS/RHEL)
+```bash
+sudo yum install git
+git --version
+```
+
+#### Windows
+1. 下载 [Git for Windows](https://gitforwindows.org/)
+2. 运行安装程序，建议勾选"Add Git to PATH"
+3. 打开 PowerShell / CMD 验证：
+```powershell
+git --version
+```
+
+---
+
+### UV (Python 包管理器)
+
+#### Linux / macOS
+```bash
+# 安装 UV
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 验证
+source ~/.bashrc  # 或重新打开终端
+uv --version
+```
+
+#### Windows
+```powershell
+# 使用 PowerShell 安装
+irm https://astral.sh/uv/install.ps1 | iex
+
+# 验证
+uv --version
+```
+
+> **提示**: UV 是一个极速 Python 包管理器，替代 pip/poetry，支持项目管理、虚拟环境、依赖锁定等。
+
+---
+
 ## 安装
 
 ```bash
