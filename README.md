@@ -1,293 +1,131 @@
 # Surpriver-CN
 
-> 🇨🇳 A股异动检测 - 基于Isolation Forest机器学习算法
+> 🇨🇳 A股异动检测 — 基于 Isolation Forest 算法
 
-**完全由AI改造自 [tradytics/surpriver](https://github.com/tradytics/surpriver)，专为A股市场设计。**
-
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+**专为A股市场设计的异动股票检测工具**，[原项目](https://github.com/tradytics/surpriver) 为美股版本。
 
 ---
 
-## 源项目介绍 (Original Project)
-
-> **Surpriver** - 利用机器学习和异常检测，在股票大幅波动之前发现它们。
-
-**原文（英文）：**
-
-> *Find high moving stocks before they move using anomaly detection and machine learning. Surpriver uses machine learning to look at volume + price action and infer unusual patterns which can result in big moves in stocks.*
-
-**翻译（中文）：**
-
-> Surpriver 使用机器学习技术分析成交量和价格走势，推断异常模式，从而在股票大幅波动之前识别出潜在的高波动股票。
-
-Surpriver 基于 **Isolation Forest（隔离森林）** 算法，通过分析以下特征来检测异常：
-- 📊 **成交量异常**：今日成交量与历史均量的对比
-- 📈 **价格波动异常**：短期与长期波动率的差异
-- 🔍 **技术指标异常**：RSI、Stochastic、CCI、EOM等指标的非典型模式
-
----
-
-## 项目说明
-
-本项目是对 [tradytics/surpriver](https://github.com/tradytics/surpriver) 的AI自动化改造版本，原项目专注于美股异动检测。本版本针对中国A股市场进行了深度适配：
-
-- **数据源**：Yahoo Finance → AKShare / Tushare（可选）
-- **市场支持**：美股 → 沪深北交所全支持
-- **代码体系**：美股代码（AAPL）→ A股代码（600000.SH）
-- **输出语言**：英文 → 中英双语
-
-### 核心功能
+## 功能特点
 
 - 🔍 **异动检测**：Isolation Forest 算法识别异常波动股票
-- 📊 **技术指标**：RSI、Stochastics、CCI、EOM等
+- 📊 **技术指标**：RSI、Stochastics、CCI、EOM 等
 - 📈 **成交量分析**：今日量能与历史均量对比
 - 🎯 **波动率过滤**：过滤低波动股票，聚焦活跃标的
 - 📝 **测试模式**：验证策略有效性
 
-## 技术栈
-
-| 类别 | 技术 |
-|------|------|
-| 数据获取 | AKShare / Tushare（可选）|
-| 技术分析 | ta-lib |
-| 数据处理 | Pandas, NumPy, SciPy |
-| 机器学习 | Scikit-learn (Isolation Forest) |
-| 可视化 | Matplotlib |
-
-## 数据源配置
-
-项目支持两个数据源，通过 `.env` 文件切换：
-
-### 方式一：AKShare（默认，免费）
-
-```bash
-# .env 文件
-DATA_SOURCE=akshare
-```
-
-无需配置，直接使用。但需要能访问东方财富接口。
-
-### 方式二：Tushare（推荐，更稳定）
-
-```bash
-# .env 文件
-DATA_SOURCE=tushare
-TUSHARE_TOKEN=your_tushare_token_here
-```
-
-**申请Tushare Token：**
-1. 打开 https://tushare.pro/register 注册账号
-2. 申请 Token：https://tushare.pro/document/88
-3. 将 Token 填入 `.env` 文件
-
-### 配置示例
-
-```bash
-# 复制模板
-cp .env.template .env
-
-# 编辑配置
-nano .env
-```
-
-```ini
-# .env
-DATA_SOURCE=tushare
-TUSHARE_TOKEN=your_token_here
-```
-
-## 环境安装
-
-### Git
-
-#### Linux (Ubuntu/Debian)
-```bash
-sudo apt update
-sudo apt install git
-git --version
-```
-
-#### Linux (CentOS/RHEL)
-```bash
-sudo yum install git
-git --version
-```
-
-#### Windows
-1. 下载 [Git for Windows](https://gitforwindows.org/)
-2. 运行安装程序，建议勾选"Add Git to PATH"
-3. 打开 PowerShell / CMD 验证：
-```powershell
-git --version
-```
-
 ---
-
-### UV (Python 包管理器)
-
-#### Linux / macOS
-```bash
-# 安装 UV
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# 验证
-source ~/.bashrc  # 或重新打开终端
-uv --version
-```
-
-#### Windows
-```powershell
-# 使用 PowerShell 安装
-irm https://astral.sh/uv/install.ps1 | iex
-
-# 验证
-uv --version
-```
-
-> **提示**: UV 是一个极速 Python 包管理器，替代 pip/poetry，支持项目管理、虚拟环境、依赖锁定等。
-
----
-
-## 安装
-
-```bash
-# 克隆项目
-git clone https://github.com/rz1998/surpriver-cn.git
-cd surpriver-cn
-
-# 创建虚拟环境（推荐）
-uv venv .venv
-source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate   # Windows
-
-# 安装依赖（根据数据源选择）
-uv pip install -r requirements.txt
-# 或使用 pip
-pip install -r requirements.txt
-```
 
 ## 快速开始
 
-### 1. 配置数据源
+### 1. 安装依赖
+
+```bash
+# 中国网络环境推荐使用 pip + 国内镜像
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+### 2. 配置数据源
 
 ```bash
 cp .env.template .env
-# 编辑 .env 选择数据源并填入 Token（如果是 Tushare）
 ```
 
-### 2. 运行检测（自动获取股票列表）
+编辑 `.env` 文件，选择数据源：
 
-可以直接运行，无需准备股票列表：
+| 数据源 | 配置 | 说明 |
+|--------|------|------|
+| AKShare | `DATA_SOURCE=akshare` | 免费，需访问东方财富 |
+| Tushare | `DATA_SOURCE=tushare`<br>`TUSHARE_TOKEN=你的token` | 更稳定，需注册 |
+
+**Tushare Token 申请**：<https://tushare.pro/register>
+
+### 3. 运行检测
 
 ```bash
-# 自动获取全A股股票列表并检测异动
-python detection_engine_cn.py \
-    --top_n 25 \
-    --min_volume 10000 \
-    --data_granularity_minutes 60 \
-    --history_to_use 14 \
-    --auto_fetch_stocks
+# 自动获取全A股列表并检测（推荐）
+python detection_engine_cn.py --auto_fetch_stocks
 
-# 或手动指定股票列表
-python detection_engine_cn.py \
-    --top_n 25 \
-    --min_volume 10000 \
-    --data_granularity_minutes 60 \
-    --history_to_use 14 \
-    --stock_list stocks_cn.txt
+# 指定股票列表检测
+python detection_engine_cn.py --stock_list stocks/stocks_cn.txt
+
+# 使用缓存数据（再次运行更快）
+python detection_engine_cn.py --is_load_from_dictionary 1
+
+# 测试模式（验证策略）
+python detection_engine_cn.py --is_test 1 --future_bars 25
 ```
 
-```bash
-# 检测异动股票
-python detection_engine_cn.py \
-    --top_n 25 \
-    --min_volume 10000 \
-    --data_granularity_minutes 60 \
-    --history_to_use 14 \
-    --stock_list stocks_cn.txt
-
-# 从缓存加载（再次运行）
-python detection_engine_cn.py \
-    --top_n 25 \
-    --min_volume 10000 \
-    --data_granularity_minutes 60 \
-    --history_to_use 14 \
-    --is_load_from_dictionary 1 \
-    --data_dictionary_path 'dictionaries/cn_data_dict.npy'
-```
-
-### 3. 测试模式
-
-```bash
-# 测试历史表现
-python detection_engine_cn.py \
-    --top_n 25 \
-    --min_volume 10000 \
-    --data_granularity_minutes 60 \
-    --history_to_use 14 \
-    --is_load_from_dictionary 0 \
-    --is_save_dictionary 1 \
-    --is_test 1 \
-    --future_bars 25
-```
+---
 
 ## 参数说明
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
-| `--top_n` | 25 | 显示异动评分最高的N只股票 |
+| `--top_n` | 25 | 显示异动评分最高的 N 只股票 |
 | `--min_volume` | 10000 | 最低成交量过滤（手） |
-| `--data_granularity_minutes` | 60 | K线周期（分钟） |
-| `--history_to_use` | 14 | 用于检测的历史K线数 |
-| `--is_load_from_dictionary` | 0 | 是否从缓存加载 |
-| `--data_dictionary_path` | `dictionaries/cn_data_dict.npy` | 缓存路径 |
-| `--is_save_dictionary` | 1 | 是否保存数据缓存 |
-| `--is_test` | 0 | 是否启用测试模式 |
-| `--future_bars` | 25 | 测试用未来K线数 |
-| `--output_format` | CLI | 输出格式（CLI/JSON） |
-| `--stock_list` | `stocks_cn.txt` | 股票列表文件 |
-| `--auto_fetch_stocks` | False | 自动从API获取A股股票列表（无需手动配置） |
+| `--data_granularity_minutes` | 60 | K 线周期（分钟） |
+| `--history_to_use` | 14 | 用于检测的历史 K 线数 |
+| `--auto_fetch_stocks` | False | 自动获取 A 股列表 |
+| `--is_load_from_dictionary` | 0 | 从缓存加载数据 |
+| `--is_test` | 0 | 测试模式 |
 
-## 股票代码说明
+完整参数列表：
 
-| 市场 | 代码前缀 | 后缀示例 |
-|------|----------|----------|
-| 上海主板 | 6xx xxx | 600000.SH |
-| 深圳主板 | 0xx xxx | 000001.SZ |
-| 创业板 | 300 xxx | 300760.SZ |
-| 北交所 | 43x/83x | 430047.BJ |
+```bash
+python detection_engine_cn.py --help
+```
+
+---
+
+## 股票代码格式
+
+| 市场 | 格式示例 |
+|------|----------|
+| 上海主板 | 600000.SH |
+| 深圳主板 | 000001.SZ |
+| 创业板 | 300760.SZ |
+| 北交所 | 430047.BJ |
+
+---
 
 ## 项目结构
 
 ```
 surpriver-cn/
-├── data_loader_cn.py      # A股数据加载（支持AKShare/Tushare）
-├── detection_engine_cn.py  # 主检测引擎
-├── feature_generator.py    # 技术指标生成
-├── requirements.txt        # 依赖
-├── .env.template         # 环境变量模板
+├── detection_engine_cn.py   # 主检测引擎
+├── data_loader_cn.py       # 数据加载（AKShare/Tushare）
+├── feature_generator.py     # 技术指标生成
+├── requirements.txt         # Python 依赖
 ├── stocks/
-│   └── stocks_cn.txt     # A股股票列表示例
+│   └── stocks_cn.txt       # 股票列表示例
 ├── dictionaries/          # 数据缓存
-└── figures/              # 图表输出
+└── figures/                # 图表输出
 ```
+
+---
+
+## 技术栈
+
+| 类别 | 技术 |
+|------|------|
+| 数据获取 | AKShare / Tushare |
+| 机器学习 | Scikit-learn (Isolation Forest) |
+| 数据处理 | Pandas, NumPy |
+| 技术分析 | ta-lib |
+| 可视化 | Matplotlib |
+
+---
 
 ## 注意事项
 
-1. **数据源选择**：Tushare更稳定但需要Token；AKShare免费但依赖网络环境
-2. **数据限制**：AKShare免费版有数据量限制，高频交易建议付费数据源
-3. **市场兼容性**：仅支持A股，不支持港股、美股
-4. **时间延迟**：实时数据可能有15分钟延迟
-5. **异动≠涨跌**：异动检测只识别异常波动，不预测方向
+1. **数据源**：Tushare 更稳定，推荐使用
+2. **市场支持**：仅支持 A 股（沪深北交所）
+3. **异动 ≠ 涨跌**：检测识别的是异常波动，不预测方向
+4. **缓存复用**：`--is_load_from_dictionary 1` 可加速重复检测
 
-## 原项目
-
-- [tradytics/surpriver](https://github.com/tradytics/surpriver) - 美股版本
+---
 
 ## License
 
 基于 GPL v3，继承自 [tradytics/surpriver](https://github.com/tradytics/surpriver)
-
----
-
-**🤖 本项目由AI（MiniMax-M2.7）基于原始surpriver项目完全自动化改造完成，专为A股市场设计。**
