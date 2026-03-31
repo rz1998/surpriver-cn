@@ -6,6 +6,26 @@
 
 ---
 
+## ⚡ 中国网络环境最佳实践
+
+> **推荐安装方式**（避免网络超时、下载失败）
+
+```bash
+# 1. 使用 pip + 国内镜像安装依赖
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 2. 如果 pip 速度慢，试试 uv（国内镜像）
+pip install uv -i https://pypi.tuna.tsinghua.edu.cn/simple
+uv venv .venv
+source .venv/bin/activate
+uv pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 3. 数据源推荐 Tushare（比 AKShare 更稳定）
+#    注册地址：https://tushare.pro/register
+```
+
+---
+
 ## 功能特点
 
 - 🔍 **异动检测**：Isolation Forest 算法识别异常波动股票
