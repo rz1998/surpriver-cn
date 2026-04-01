@@ -199,7 +199,7 @@ uv pip install -r requirements.txt
 > **推荐安装方式**（避免网络超时、下载失败）
 
 <details open>
-<summary><b>点击查看详情</b></summary>
+<summary><b>Linux / macOS</b></summary>
 
 ```bash
 # 1. 使用 pip + 国内镜像安装依赖
@@ -209,6 +209,25 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install uv -i https://pypi.tuna.tsinghua.edu.cn/simple
 uv venv .venv
 source .venv/bin/activate
+uv pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 3. 数据源推荐 Tushare（比 AKShare 更稳定）
+#    注册地址：https://tushare.pro/register
+```
+
+</details>
+
+<details>
+<summary><b>Windows</b></summary>
+
+```powershell
+# 1. 使用 pip + 国内镜像安装依赖
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 2. 如果 pip 速度慢，试试 uv（国内镜像）
+pip install uv -i https://pypi.tuna.tsinghua.edu.cn/simple
+uv venv .venv
+.venv\Scripts\activate
 uv pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 3. 数据源推荐 Tushare（比 AKShare 更稳定）
