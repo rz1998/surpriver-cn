@@ -173,9 +173,14 @@ source .venv/bin/activate
 <summary><b>Windows</b></summary>
 
 ```powershell
+# 如遇执行策略错误，先设置权限（需管理员PowerShell）
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
 uv venv .venv
 .venv\Scripts\activate
 ```
+
+> **提示**：如果 `Set-ExecutionPolicy` 报错"拒绝访问"，请用 **管理员身份** 打开 PowerShell 后再运行。
 
 </details>
 
@@ -221,6 +226,9 @@ uv pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 <summary><b>Windows</b></summary>
 
 ```powershell
+# 0. 如遇执行策略错误，先设置权限（需管理员PowerShell）
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
 # 1. 使用 pip + 国内镜像安装依赖
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
@@ -233,6 +241,11 @@ uv pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 # 3. 数据源推荐 Tushare（比 AKShare 更稳定）
 #    注册地址：https://tushare.pro/register
 ```
+
+> **提示**：如果 `Set-ExecutionPolicy` 报错"拒绝访问"，请用 **管理员身份** 打开 PowerShell 后再运行。或使用 CMD 替代：
+> ```cmd
+> .venv\Scripts\activate.bat
+> ```
 
 </details>
 
