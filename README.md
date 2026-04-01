@@ -317,7 +317,7 @@ python detection_engine_cn.py --auto_fetch_stocks
 # 指定股票列表检测
 python detection_engine_cn.py --stock_list stocks/stocks_cn.txt
 
-# 使用缓存数据（再次运行更快）
+# 使用缓存数据（再次运行更快，首次运行会自动创建缓存）
 python detection_engine_cn.py --is_load_from_dictionary 1
 
 # 测试模式（验证策略）
@@ -388,6 +388,7 @@ surpriver-cn/
 3. **市场兼容性**：仅支持 A 股，不支持港股、美股
 4. **时间延迟**：实时数据可能有 15 分钟延迟
 5. **异动 ≠ 涨跌**：异动检测只识别异常波动，不预测方向
+6. **缓存目录**：首次运行时会自动创建 `dictionaries/` 目录，无需手动创建
 
 ---
 
